@@ -64,8 +64,7 @@ type Options struct {
 	ExcludeIps bool
 }
 
-// ParseOptions parses the command line flags provided by a user
-func ParseOptions() *Options {
+func BuildOptions() (*goflags.FlagSet, *Options) {
 	// Migrate config to provider config
 	if fileutil.FileExists(defaultConfigLocation) && !fileutil.FileExists(defaultProviderConfigLocation) {
 		gologger.Info().Msgf("Detected old %s config file, trying to migrate providers to %s\n", defaultConfigLocation, defaultProviderConfigLocation)
@@ -80,7 +79,6 @@ func ParseOptions() *Options {
 
 	options := &Options{}
 
-	var err error
 	flagSet := goflags.NewFlagSet()
 	flagSet.SetDescription(`Subfinder is a subdomain discovery tool that discovers subdomains for websites by using passive online sources.`)
 
@@ -132,6 +130,14 @@ func ParseOptions() *Options {
 		flagSet.IntVar(&options.MaxEnumerationTime, "max-time", 10, "minutes to wait for enumeration results"),
 	)
 
+	return flagSet, options
+}
+
+// ParseOptions parses the command line flags provided by a user
+func ParseOptions() *Options {
+	flagSet, options := BuildOptions()
+
+	var err error
 	if err := flagSet.Parse(); err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
